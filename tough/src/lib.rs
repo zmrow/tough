@@ -24,6 +24,7 @@ mod datastore;
 pub mod error;
 mod fetch;
 mod io;
+pub mod key_source;
 pub mod schema;
 pub mod sign;
 mod transport;

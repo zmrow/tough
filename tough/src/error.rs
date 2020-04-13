@@ -57,6 +57,10 @@ pub enum Error {
         backtrace: Backtrace,
     },
 
+    /// A generic error with a descriptive string (useful for implementing traits)
+    #[snafu(display("Error: {}", msg))]
+    GenericError { msg: String },
+
     /// A downloaded target's checksum does not match the checksum listed in the repository
     /// metadata.
     #[snafu(display(
@@ -215,6 +219,14 @@ pub enum Error {
         backtrace: Backtrace,
     },
 }
+
+//impl From<dyn std::error::Error> for self::Error {
+//    fn from(err: Error) -> self::Error {
+//        self::Error::GenericError {
+//            msg: err.to_string(),
+//        }
+//    }
+//}
 
 // used in `std::io::Read` implementations
 impl From<Error> for std::io::Error {
