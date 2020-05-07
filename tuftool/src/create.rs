@@ -3,7 +3,6 @@
 
 use crate::datetime::parse_datetime;
 use crate::error::{self, Result};
-use crate::key::RootKeys;
 use crate::metadata;
 use crate::root_digest::RootDigest;
 use crate::source::parse_key_source;
@@ -21,6 +20,7 @@ use std::num::{NonZeroU64, NonZeroUsize};
 use std::path::{Path, PathBuf};
 use structopt::StructOpt;
 use tough::key_source::KeySource;
+use tough::root_digest::RootKeys;
 use tough::schema::{
     decoded::Decoded, Hashes, Role, Snapshot, SnapshotMeta, Target, Targets, Timestamp,
     TimestampMeta,
@@ -84,8 +84,11 @@ impl CreateArgs {
                 .context(error::InitializeThreadPool)?;
         }
 
-        let root_digest = RootDigest::load(&self.root)?;
-        let key_pairs = root_digest.load_keys(&self.keys)?;
+        let root_digest =
+            RootDigest::load(&self.root).context(error::ParseRoot { path: &self.root })?;
+        let key_pairs = root_digest
+            .load_keys(&self.keys)
+            .context(error::KeysFromRoot { path: &self.root })?;
 
         CreateProcess {
             args: self,

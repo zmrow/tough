@@ -127,6 +127,13 @@ pub(crate) enum Error {
         backtrace: Backtrace,
     },
 
+    #[snafu(display("Unable to retrieve keys from root metadata file '{}': {}", path.display(), source))]
+    KeysFromRoot {
+        path: PathBuf,
+        source: tough::error::Error,
+        backtrace: Backtrace,
+    },
+
     #[snafu(display("Failed to calculate key ID: {}", source))]
     KeyId {
         #[snafu(backtrace)]
@@ -144,9 +151,6 @@ pub(crate) enum Error {
         source: Box<dyn std::error::Error + Send + Sync + 'static>,
         backtrace: Backtrace,
     },
-
-    #[snafu(display("Unable to match any of the provided keys with root.json"))]
-    KeysNotFoundInRoot { backtrace: Backtrace },
 
     #[snafu(display("Metadata error: {}", source))]
     Metadata {
@@ -180,6 +184,13 @@ pub(crate) enum Error {
         path: PathBuf,
         base: PathBuf,
         source: std::path::StripPrefixError,
+        backtrace: Backtrace,
+    },
+
+    #[snafu(display("Unable to open and parse root metadata file '{}': {}", path.display(), source))]
+    ParseRoot {
+        path: PathBuf,
+        source: tough::error::Error,
         backtrace: Backtrace,
     },
 

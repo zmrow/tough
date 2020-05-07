@@ -6,12 +6,8 @@ use olpc_cjson::CanonicalFormatter;
 use ring::rand::SecureRandom;
 use serde::Serialize;
 use snafu::ResultExt;
-use std::collections::HashMap;
-use tough::schema::decoded::{Decoded, Hex};
+use tough::root_digest::RootKeys;
 use tough::schema::{RoleType, Root, Signature, Signed};
-use tough::sign::Sign;
-
-pub(crate) type RootKeys = HashMap<Decoded<Hex>, Box<dyn Sign>>;
 
 pub(crate) fn sign_metadata<T: Serialize>(
     root: &Root,

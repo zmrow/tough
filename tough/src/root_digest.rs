@@ -1,36 +1,30 @@
-use crate::error;
-use crate::error::Result;
-use crate::key::RootKeys;
+use crate::error::{self, Result};
+use crate::key_source::KeySource;
+use crate::schema::decoded::{Decoded, Hex};
+use crate::schema::{Root, Signed};
+use crate::sign::Sign;
 use ring::digest::{SHA256, SHA256_OUTPUT_LEN};
 use snafu::ensure;
 use snafu::ResultExt;
 use std::collections::HashMap;
 use std::path::PathBuf;
-use tough::key_source::KeySource;
-use tough::schema::{Root, Signed};
+
+pub type RootKeys = HashMap<Decoded<Hex>, Box<dyn Sign>>;
 
 /// Represents a loaded root.json file along with its sha256 digest and size in bytes
-pub(crate) struct RootDigest {
+#[derive(Debug)]
+pub struct RootDigest {
     /// The loaded Root object
-    pub(crate) root: Root,
+    pub root: Root,
     /// The sha256 digest of the root.json file
-    pub(crate) digest: [u8; SHA256_OUTPUT_LEN],
+    pub digest: [u8; SHA256_OUTPUT_LEN],
     /// The size (in bytes) of the root.json
-    pub(crate) size: u64,
+    pub size: u64,
 }
 
 impl RootDigest {
     /// Constructs a `RootDigest` object by parsing a `root.json` file
-    ///
-    /// # Arguments
-    ///
-    /// * `path` - The filepath to a `root.json` file
-    ///
-    ///  # Return
-    ///
-    /// * Either an Error, or a constructed `RootDigest`
-    ///
-    pub(crate) fn load(path: &PathBuf) -> Result<Self> {
+    pub fn load(path: &PathBuf) -> Result<Self> {
         let root_buf = std::fs::read(path).context(error::FileRead { path })?;
         let root = serde_json::from_slice::<Signed<Root>>(&root_buf)
             .context(error::FileParseJson { path })?
@@ -43,20 +37,7 @@ impl RootDigest {
 
     /// Searches `KeySources` to match them with the keys that are designated in the `root.json`
     /// file.
-    ///
-    /// # Arguments
-    ///
-    /// * `keys` - The list of `KeySources` (i.e. private keys) to search
-    ///
-    /// # Return
-    ///
-    /// * A map of private keys identifiable by their names as defined in `root.json`
-    ///
-    /// # Errors
-    ///
-    /// * An error can occur for io reasons
-    ///
-    pub(crate) fn load_keys(&self, keys: &[Box<dyn KeySource>]) -> Result<RootKeys> {
+    pub fn load_keys(&self, keys: &[Box<dyn KeySource>]) -> Result<RootKeys> {
         let mut map = HashMap::new();
         for source in keys {
             let key_pair = source.as_sign().context(error::KeyPairFromKeySource)?;

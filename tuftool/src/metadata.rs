@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
 use crate::error::{self, Result};
-use crate::key::RootKeys;
 use olpc_cjson::CanonicalFormatter;
 use ring::digest::{digest, SHA256, SHA256_OUTPUT_LEN};
 use ring::rand::SecureRandom;
@@ -10,6 +9,7 @@ use serde::Serialize;
 use snafu::ResultExt;
 use std::num::NonZeroU64;
 use std::path::PathBuf;
+use tough::root_digest::RootKeys;
 use tough::schema::{Role, RoleType, Root, Signature, Signed};
 
 fn sign_metadata_inner<T: Serialize>(

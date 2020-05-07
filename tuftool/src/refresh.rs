@@ -110,10 +110,13 @@ impl RefreshArgs {
         };
 
         // load the root.json file
-        let root_digest = RootDigest::load(&self.root)?;
+        let root_digest =
+            RootDigest::load(&self.root).context(error::ParseRoot { path: &self.root })?;
 
         // match the command line keys to the root.json keys
-        let keys = root_digest.load_keys(&self.keys)?;
+        let keys = root_digest
+            .load_keys(&self.keys)
+            .context(error::KeysFromRoot { path: &self.root })?;
 
         // sign and write out the new targets.json file
         let rng = SystemRandom::new();

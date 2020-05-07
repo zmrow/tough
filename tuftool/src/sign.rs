@@ -1,13 +1,14 @@
 // Copyright 2019 Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
-use crate::error::Result;
+use crate::error::{self, Result};
 use crate::key::sign_metadata;
 use crate::root_digest::RootDigest;
 use crate::source::parse_key_source;
 use crate::{load_file, write_file};
 use ring::rand::SystemRandom;
 use serde::{Deserialize, Serialize};
+use snafu::ResultExt;
 use std::collections::HashMap;
 use std::path::PathBuf;
 use structopt::StructOpt;
@@ -39,8 +40,11 @@ struct PartialRole {
 
 impl SignArgs {
     pub(crate) fn run(&self) -> Result<()> {
-        let root_digest = RootDigest::load(&self.root)?;
-        let keys = root_digest.load_keys(&self.keys)?;
+        let root_digest =
+            RootDigest::load(&self.root).context(error::ParseRoot { path: &self.root })?;
+        let keys = root_digest
+            .load_keys(&self.keys)
+            .context(error::KeysFromRoot { path: &self.root })?;
         let mut metadata: Signed<PartialRole> = load_file(&self.metadata_file)?;
         sign_metadata(
             &root_digest.root,

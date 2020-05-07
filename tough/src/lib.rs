@@ -25,6 +25,7 @@ pub mod error;
 mod fetch;
 mod io;
 pub mod key_source;
+pub mod root_digest;
 pub mod schema;
 pub mod sign;
 mod transport;

@@ -57,6 +57,13 @@ pub enum Error {
         backtrace: Backtrace,
     },
 
+    #[snafu(display("Failed to parse {}: {}", path.display(), source))]
+    FileParseJson {
+        path: PathBuf,
+        source: serde_json::Error,
+        backtrace: Backtrace,
+    },
+
     #[snafu(display("Failed to read {}: {}", path.display(), source))]
     FileRead {
         path: PathBuf,
@@ -103,6 +110,15 @@ pub enum Error {
 
     #[snafu(display("Unrecognized private key format"))]
     KeyUnrecognized { backtrace: Backtrace },
+
+    #[snafu(display("Unable to parse keypair: {}", source))]
+    KeyPairFromKeySource {
+        source: Box<dyn std::error::Error + Send + Sync + 'static>,
+        backtrace: Backtrace,
+    },
+
+    #[snafu(display("Unable to match any of the provided keys with root.json"))]
+    KeysNotFoundInRoot { backtrace: Backtrace },
 
     /// A file's maximum size exceeded a limit set by the consumer of this library or the metadata.
     #[snafu(display("Maximum size {} (specified by {}) exceeded", max_size, specifier))]

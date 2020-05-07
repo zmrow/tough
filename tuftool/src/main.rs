@@ -19,7 +19,6 @@ mod key;
 mod metadata;
 mod refresh;
 mod root;
-mod root_digest;
 mod sign;
 mod source;
 
@@ -30,6 +29,7 @@ use std::io::Write;
 use std::path::Path;
 use structopt::StructOpt;
 use tempfile::NamedTempFile;
+use tough::root_digest;
 
 static SPEC_VERSION: &str = "1.0.0";
 
