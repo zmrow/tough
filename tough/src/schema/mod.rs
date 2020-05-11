@@ -245,7 +245,7 @@ impl Target {
             .file_name()
             .context(error::NoFileName { path })?
             .to_str()
-            .context(error::PathUtf8 { path: path })?
+            .context(error::PathUtf8 { path })?
             .to_owned();
 
         let mut file = File::open(path).context(error::FileOpen { path })?;

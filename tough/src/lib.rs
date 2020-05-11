@@ -21,6 +21,7 @@
 )]
 
 mod datastore;
+pub mod editor;
 pub mod error;
 mod fetch;
 mod io;

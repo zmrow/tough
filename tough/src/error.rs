@@ -18,6 +18,14 @@ pub type Result<T> = std::result::Result<T, Error>;
 #[snafu(visibility = "pub(crate)")]
 pub enum Error {
     /// The library failed to create a file in the datastore.
+    #[snafu(display("Unable to canonicalize path '{}': {}", path.display(), source))]
+    AbsolutePath {
+        path: PathBuf,
+        source: std::io::Error,
+        backtrace: Backtrace,
+    },
+
+    /// The library failed to create a file in the datastore.
     #[snafu(display("Failed to create file at datastore path {}: {}", path.display(), source))]
     DatastoreCreate {
         path: PathBuf,
@@ -54,6 +62,13 @@ pub enum Error {
     #[snafu(display("{} metadata is expired", role))]
     ExpiredMetadata {
         role: RoleType,
+        backtrace: Backtrace,
+    },
+
+    #[snafu(display("Failed to create {}: {}", path.display(), source))]
+    FileCreate {
+        path: PathBuf,
+        source: std::io::Error,
         backtrace: Backtrace,
     },
 
@@ -191,6 +206,18 @@ pub enum Error {
         backtrace: Backtrace,
     },
 
+    #[snafu(display("Failed to serialize role for signing: {}", source))]
+    SerializeRole {
+        source: serde_json::Error,
+        backtrace: Backtrace,
+    },
+
+    #[snafu(display("Failed to serialize signed role: {}", source))]
+    SerializeSignedRole {
+        source: serde_json::Error,
+        backtrace: Backtrace,
+    },
+
     #[snafu(display("Failed to sign message"))]
     Sign {
         source: ring::error::Unspecified,
@@ -206,6 +233,13 @@ pub enum Error {
     SystemTimeSteppedBackward {
         sys_time: DateTime<Utc>,
         latest_known_time: DateTime<Utc>,
+    },
+
+    #[snafu(display("Unable to create Target from path '{}': {}", path.display(), source))]
+    TargetFromPath {
+        path: PathBuf,
+        source: crate::schema::Error,
+        backtrace: Backtrace,
     },
 
     /// A transport error occurred while fetching a URL.

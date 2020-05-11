@@ -1,4 +1,6 @@
+use std::collections::HashMap;
 use std::io::Read;
+use std::path::PathBuf;
 use url::Url;
 
 pub trait Transport {
@@ -20,6 +22,36 @@ impl Transport for FilesystemTransport {
 
         if url.scheme() == "file" {
             std::fs::File::open(url.path())
+        } else {
+            Err(Error::new(
+                ErrorKind::InvalidInput,
+                format!("unexpected URL scheme: {}", url.scheme()),
+            ))
+        }
+    }
+}
+
+#[derive(Debug)]
+pub(crate) struct TargetMapTransport {
+    pub targets: HashMap<String, PathBuf>,
+}
+
+impl Transport for TargetMapTransport {
+    type Stream = std::fs::File;
+    type Error = std::io::Error;
+
+    fn fetch(&self, url: Url) -> Result<Self::Stream, Self::Error> {
+        use std::io::{Error, ErrorKind};
+
+        if url.scheme() == "target-hashmap" {
+            if let Some(target) = self.targets.get(url.path()) {
+                std::fs::File::open(target)
+            } else {
+                Err(Error::new(
+                    ErrorKind::InvalidInput,
+                    format!("unknown target path: {}", url.path()),
+                ))
+            }
         } else {
             Err(Error::new(
                 ErrorKind::InvalidInput,
