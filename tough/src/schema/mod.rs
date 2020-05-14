@@ -13,6 +13,7 @@ pub use crate::schema::error::{Error, Result};
 use crate::schema::decoded::{Decoded, Hex};
 use crate::schema::iter::KeysIter;
 use crate::schema::key::Key;
+use crate::sign::Sign;
 use chrono::{DateTime, Utc};
 use olpc_cjson::CanonicalFormatter;
 use ring::digest::{Context, SHA256};
@@ -120,6 +121,17 @@ impl Root {
             keys: &self.keys,
         }
     }
+
+    /// Given an object/key that impls Sign, return the corresponding
+    /// key ID from Root
+    pub fn key_id(&self, key_pair: &dyn Sign) -> Option<Decoded<Hex>> {
+        for (key_id, key) in &self.keys {
+            if key_pair.tuf_key() == *key {
+                Some(key_id.clone());
+            }
+        }
+        None
+    }
 }
 
 impl Role for Root {
@@ -181,6 +193,17 @@ pub struct Hashes {
     pub _extra: HashMap<String, Value>,
 }
 
+impl Snapshot {
+    pub fn new(spec_version: String, version: NonZeroU64, expires: DateTime<Utc>) -> Self {
+        Snapshot {
+            spec_version,
+            version,
+            expires,
+            meta: HashMap::new(),
+            _extra: HashMap::new(),
+        }
+    }
+}
 impl Role for Snapshot {
     const TYPE: RoleType = RoleType::Snapshot;
 
@@ -245,7 +268,7 @@ impl Target {
             .file_name()
             .context(error::NoFileName { path })?
             .to_str()
-            .context(error::PathUtf8 { path: path })?
+            .context(error::PathUtf8 { path })?
             .to_owned();
 
         let mut file = File::open(path).context(error::FileOpen { path })?;
@@ -273,6 +296,18 @@ impl Target {
         };
 
         Ok((target_name, target))
+    }
+}
+
+impl Targets {
+    pub fn new(spec_version: String, version: NonZeroU64, expires: DateTime<Utc>) -> Self {
+        Targets {
+            spec_version,
+            version,
+            expires,
+            targets: HashMap::new(),
+            _extra: HashMap::new(),
+        }
     }
 }
 
@@ -318,6 +353,18 @@ pub struct TimestampMeta {
     /// If you're instantiating this struct, you should make this `HashMap::empty()`.
     #[serde(flatten)]
     pub _extra: HashMap<String, Value>,
+}
+
+impl Timestamp {
+    pub fn new(spec_version: String, version: NonZeroU64, expires: DateTime<Utc>) -> Self {
+        Timestamp {
+            spec_version,
+            version,
+            expires,
+            meta: HashMap::new(),
+            _extra: HashMap::new(),
+        }
+    }
 }
 
 impl Role for Timestamp {

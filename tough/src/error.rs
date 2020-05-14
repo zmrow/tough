@@ -17,6 +17,14 @@ pub type Result<T> = std::result::Result<T, Error>;
 #[derive(Debug, Snafu)]
 #[snafu(visibility = "pub(crate)")]
 pub enum Error {
+    /// The library failed to canonicalize the given path
+    #[snafu(display("Unable to canonicalize path '{}': {}", path.display(), source))]
+    AbsolutePath {
+        path: PathBuf,
+        source: std::io::Error,
+        backtrace: Backtrace,
+    },
+
     /// The library failed to create a file in the datastore.
     #[snafu(display("Failed to create file at datastore path {}: {}", path.display(), source))]
     DatastoreCreate {
@@ -64,6 +72,13 @@ pub enum Error {
         backtrace: Backtrace,
     },
 
+    #[snafu(display("Failed to parse {}: {}", path.display(), source))]
+    FileParseJson {
+        path: PathBuf,
+        source: serde_json::Error,
+        backtrace: Backtrace,
+    },
+
     #[snafu(display("Failed to write to {}: {}", path.display(), source))]
     FileWrite {
         path: PathBuf,
@@ -95,11 +110,20 @@ pub enum Error {
         backtrace: Backtrace,
     },
 
+    #[snafu(display("Unable to parse keypair: {}", source))]
+    KeyPairFromKeySource {
+        source: Box<dyn std::error::Error + Send + Sync + 'static>,
+        backtrace: Backtrace,
+    },
+
     #[snafu(display("Private key rejected: {}", source))]
     KeyRejected {
         source: ring::error::KeyRejected,
         backtrace: Backtrace,
     },
+
+    #[snafu(display("Unable to match any of the provided keys with root.json"))]
+    KeysNotFoundInRoot { backtrace: Backtrace },
 
     #[snafu(display("Unrecognized private key format"))]
     KeyUnrecognized { backtrace: Backtrace },
@@ -126,6 +150,21 @@ pub enum Error {
         role: RoleType,
         backtrace: Backtrace,
     },
+
+    /// A required reference to a metadata file is missing from a metadata file.
+    #[snafu(display("Missing field: {}", field))]
+    Missing { field: String, backtrace: Backtrace },
+
+    /// Unable to determine file name (path ends in '..' or is '/')
+    #[snafu(display("Unable to determine file name from path: '{}'", path.display()))]
+    NoFileName { path: PathBuf, backtrace: Backtrace },
+
+    /// Can't create a repo with no targets
+    #[snafu(display("Unable to create a TUF repo without targets"))]
+    NoTargets {},
+
+    #[snafu(display("Key for role '{}' do not exist in root.json", role))]
+    NoRoleKeysinRoot { role: String },
 
     /// A downloaded metadata file has an older version than a previously downloaded metadata file.
     #[snafu(display(
@@ -175,9 +214,39 @@ pub enum Error {
         backtrace: Backtrace,
     },
 
+    /// Path isn't a valid UTF8 string
+    #[snafu(display("Path {} is not valid UTF-8", path.display()))]
+    PathUtf8 { path: PathBuf, backtrace: Backtrace },
+
+    #[snafu(display("Failed to serialize role for signing: {}", source))]
+    SerializeRole {
+        source: serde_json::Error,
+        backtrace: Backtrace,
+    },
+
+    #[snafu(display("Failed to serialize signed role: {}", source))]
+    SerializeSignedRole {
+        source: serde_json::Error,
+        backtrace: Backtrace,
+    },
+
     #[snafu(display("Failed to sign message"))]
     Sign {
         source: ring::error::Unspecified,
+        backtrace: Backtrace,
+    },
+
+    #[snafu(display("Unable to find signing keys for role '{}'", role))]
+    SigningKeysNotFound { role: String },
+
+    #[snafu(display(
+        "Tried to load repository with spec version '{}', version '{}' is supported",
+        given,
+        supported
+    ))]
+    SpecVersion {
+        given: String,
+        supported: String,
         backtrace: Backtrace,
     },
 
@@ -190,6 +259,13 @@ pub enum Error {
     SystemTimeSteppedBackward {
         sys_time: DateTime<Utc>,
         latest_known_time: DateTime<Utc>,
+    },
+
+    #[snafu(display("Unable to create Target from path '{}': {}", path.display(), source))]
+    TargetFromPath {
+        path: PathBuf,
+        source: crate::schema::Error,
+        backtrace: Backtrace,
     },
 
     /// A transport error occurred while fetching a URL.
